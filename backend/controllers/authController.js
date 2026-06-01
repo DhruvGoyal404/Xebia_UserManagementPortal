@@ -1,15 +1,13 @@
 const User = require('../models/User');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
+const { uploadBufferToCloudinary } = require('../utils/cloudinary');
 
 // User Registration
 exports.register = async (req, res) => {
   try {
     const { username, email, phone, password, confirmPassword } = req.body;
 
-    // Validation
     if (!username || !email || !phone || !password) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -18,7 +16,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Passwords do not match' });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
     });
@@ -26,58 +23,50 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create new user
+    let profilePicUrl = null;
+    if (req.files && req.files.profilePic) {
+      try {
+        const file = req.files.profilePic;
+        const result = await uploadBufferToCloudinary(file.data);
+        profilePicUrl = result.secure_url;
+      } catch (uploadErr) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload profile picture' });
+      }
+    }
+
     const user = new User({
       username,
       email,
       phone,
       password,
+      profilePic: profilePicUrl,
       role: 'user',
       isActive: false,
       isApproved: false,
     });
 
-    // Handle profile picture upload (only in development)
-    if (req.files && req.files.profilePic && process.env.NODE_ENV === 'development') {
-      const file = req.files.profilePic;
-      const uploadDir = path.join(__dirname, '../uploads');
-      
-      // Ensure uploads directory exists
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      const filename = `${Date.now()}_${file.name}`;
-      const uploadPath = path.join(uploadDir, filename);
-
-      await file.mv(uploadPath);
-      user.profilePic = `/uploads/${filename}`;
-    } else if (req.files && req.files.profilePic) {
-      // In production, files are not persisted (use external storage like AWS S3 or Cloudinary)
-      console.log('Profile picture upload attempted in production. Use external storage service.');
-    }
-
     await user.save();
 
-    // Create registration request
     const regRequest = new RegistrationRequest({
       userId: user._id,
       username,
       email,
       phone,
-      profilePic: user.profilePic,
+      profilePic: profilePicUrl,
       status: 'pending',
     });
 
     await regRequest.save();
 
     res.status(201).json({
-      message:
-        'Registration request submitted. Awaiting admin approval.',
+      message: 'Registration request submitted. Awaiting admin approval.',
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
+        profilePic: user.profilePic,
       },
     });
   } catch (err) {

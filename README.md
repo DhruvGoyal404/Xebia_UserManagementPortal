@@ -1,50 +1,88 @@
-# User Management Portal 🚀
+# User Management Portal
 
-Full-stack user management system with admin approval workflow.
+Full-stack user management system with admin approval workflow and Cloudinary-backed profile pictures.
 
-## Quick Start
+**Live:**
+- Frontend: https://xebia.dhruvgoyal.tech
+- Backend: https://xebia-user-management-portal.vercel.app
 
-**Backend:**
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-```
+**Repo:** https://github.com/DhruvGoyal404/Xebia_UserManagementPortal
 
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm start
-```
-
-## Features
-
-**Users:** Register → Pending → Admin Approval → Login → Dashboard
-
-**Admins:** Approve requests, manage users, activate/deactivate accounts, create admins
+---
 
 ## Tech Stack
 
-- **Backend:** Node.js, Express, MongoDB, JWT, bcryptjs
-- **Frontend:** React 18, React Router, Context API, Axios
-- **Deployment:** Vercel (both)
+- **Backend:** Node.js, Express, MongoDB (Atlas), JWT, bcryptjs, Cloudinary
+- **Frontend:** React 18 (CRA), React Router, Context API, Axios
+- **Deployment:** Vercel (separate projects for backend and frontend)
+
+---
+
+## Features
+
+- **Users:** Register → Pending → Admin Approval → Login → Dashboard
+- **Admins:** Approve/reject requests, manage users (activate/deactivate), create new admins
+- **Profile pics:** Uploaded to Cloudinary on registration, URL stored in MongoDB
+- **Theming:** Light / dark mode toggle with localStorage persistence
+- **Auth:** JWT-based with route guards (Protected + Guest routes) and 401 auto-logout
+
+---
+
+## Local Development
+
+### Backend
+```bash
+cd backend
+npm install
+cp .env.example .env   # fill in real values
+npm run dev
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+# create .env.local with: REACT_APP_API_URL=http://localhost:5000
+npm start
+```
+
+---
 
 ## Environment Variables
 
-**Backend (.env):**
+### Backend `.env`
 ```env
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/db
-JWT_SECRET=your_secret_key
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<dbname>
+JWT_SECRET=replace_with_a_long_random_string
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
 PORT=5000
 NODE_ENV=production
 ```
 
-**Frontend (.env.production):**
+### Frontend `.env.local` (dev)
 ```env
-REACT_APP_API_URL=https://your-backend-url.vercel.app
+REACT_APP_API_URL=http://localhost:5000
 ```
+
+For production (Vercel), set `REACT_APP_API_URL` to your deployed backend URL in the frontend project's environment variables.
+
+---
+
+## Cloudinary Setup
+
+1. Create a free account at https://cloudinary.com
+2. Dashboard → copy `Cloud Name`, `API Key`, `API Secret`
+3. Add these as env vars in:
+   - Local `backend/.env`
+   - Vercel backend project → Settings → Environment Variables
+
+Profile pictures are uploaded to the folder `user-management/profile-pics` and stored with `width: 400, height: 400, crop: 'fill', gravity: 'face'` transformation. Returned `secure_url` is saved on the `User.profilePic` field.
+
+---
 
 ## API Endpoints
 
@@ -62,27 +100,34 @@ REACT_APP_API_URL=https://your-backend-url.vercel.app
 | `/api/user/profile` | GET | User |
 | `/api/user/update-profile` | PUT | User |
 
-## Deployment
+---
 
-**Vercel (Recommended):**
-1. Push to GitHub
-2. Connect repo to Vercel
-3. Set environment variables
-4. Deploy (auto on push)
+## Deployment (Vercel — two separate projects)
 
-See docs for detailed instructions.
+Both projects deploy from the same GitHub repo, with different **Root Directory** settings.
 
-## Notes
+**Backend project**
+- Root Directory: `backend`
+- Framework Preset: Other
+- Env vars: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 
-- Passwords: hashed with bcryptjs
-- JWT: 7-day expiry
-- File uploads: development only (use S3/Cloudinary for production)
-- CORS: enabled for all origins
+**Frontend project**
+- Root Directory: `frontend`
+- Framework Preset: Create React App
+- Env vars: `REACT_APP_API_URL` (the deployed backend URL, no trailing slash)
 
-## Support
-
-For issues, check `.env` variables and verify MongoDB connection.
+**MongoDB Atlas:** Network Access → add `0.0.0.0/0` to allow Vercel serverless functions.
 
 ---
 
-**Made with ❤️**
+## Notes
+
+- Passwords are hashed with bcryptjs (salt rounds 10)
+- JWT tokens expire after 7 days
+- Profile pictures persist on Cloudinary — no local disk writes (Vercel serverless has no persistent filesystem)
+- CORS is currently open to all origins (tighten in `backend/server.js` for production hardening)
+- First admin must be seeded manually in MongoDB (chicken-and-egg with `/api/admin/create-admin`)
+
+---
+
+Made by Dhruv Goyal
