@@ -24,9 +24,14 @@ exports.register = async (req, res) => {
     }
 
     let profilePicUrl = null;
-    if (req.file) {
+    if (req.body.profilePic) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer);
+        const base64Data = req.body.profilePic.replace(
+          /^data:image\/\w+;base64,/,
+          ''
+        );
+        const buffer = Buffer.from(base64Data, 'base64');
+        const result = await uploadBufferToCloudinary(buffer);
         profilePicUrl = result.secure_url;
       } catch (uploadErr) {
         console.error('Cloudinary upload error (register):', uploadErr.message);

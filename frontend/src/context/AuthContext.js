@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axiosInstance from '../utils/axiosConfig';
+import { fileToBase64 } from '../utils/fileToBase64';
 
 const AuthContext = createContext();
 
@@ -54,17 +55,18 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('email', email);
-      formData.append('phone', phone);
-      formData.append('password', password);
-      formData.append('confirmPassword', password);
+      const payload = {
+        username,
+        email,
+        phone,
+        password,
+        confirmPassword: password,
+      };
       if (profilePic) {
-        formData.append('profilePic', profilePic);
+        payload.profilePic = await fileToBase64(profilePic);
       }
 
-      const res = await axiosInstance.post('/api/auth/register', formData);
+      const res = await axiosInstance.post('/api/auth/register', payload);
       setLoading(false);
       return res.data;
     } catch (err) {

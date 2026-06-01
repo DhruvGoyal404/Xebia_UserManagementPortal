@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosConfig';
 import { useAuth } from '../context/AuthContext';
+import { fileToBase64 } from '../utils/fileToBase64';
 import '../styles/Dashboard.css';
 
 const UserDashboard = () => {
@@ -34,12 +35,18 @@ const UserDashboard = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const fd = new FormData();
-      fd.append('username', formData.username);
-      fd.append('phone', formData.phone);
-      if (newProfilePic) fd.append('profilePic', newProfilePic);
+      const payload = {
+        username: formData.username,
+        phone: formData.phone,
+      };
+      if (newProfilePic) {
+        payload.profilePic = await fileToBase64(newProfilePic);
+      }
 
-      const res = await axiosInstance.put('/api/user/update-profile', fd);
+      const res = await axiosInstance.put(
+        '/api/user/update-profile',
+        payload
+      );
       setProfile(res.data.user);
       toast.success('Profile updated');
       setEditing(false);
