@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
-  const { user, token, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -20,11 +20,6 @@ const AdminDashboard = () => {
     password: '',
   });
 
-  const config = {
-    headers: { Authorization: `Bearer ${token}` },
-  };
-
-  // Create axios instance with token
   const api = axiosInstance;
 
   // Fetch dashboard data
@@ -36,6 +31,7 @@ const AdminDashboard = () => {
     } else if (activeTab === 'users') {
       fetchAllUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const fetchStats = async () => {

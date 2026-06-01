@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const UserDashboard = () => {
-  const { user, token, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
