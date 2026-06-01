@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const RegistrationRequest = require('../models/RegistrationRequest');
+const { sendApprovalEmail } = require('../utils/mailer');
 
 // Get all pending registration requests
 exports.getPendingRequests = async (req, res) => {
@@ -31,6 +32,11 @@ exports.approveRequest = async (req, res) => {
     user.isApproved = true;
     user.isActive = true;
     await user.save();
+
+    // Send approval email (don't block response on email failures)
+    sendApprovalEmail({ to: user.email, username: user.username }).catch(
+      (mailErr) => console.error('Approval email failed:', mailErr.message)
+    );
 
     res.json({ message: 'Request approved successfully', request });
   } catch (err) {

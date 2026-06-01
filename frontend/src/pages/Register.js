@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
 const Register = () => {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -14,11 +16,15 @@ const Register = () => {
   });
   const [profilePic, setProfilePic] = useState(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      const digits = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({ ...formData, phone: digits });
+      return;
+    }
     setFormData({ ...formData, [name]: value });
   };
 
@@ -29,7 +35,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setLoading(true);
 
     try {
@@ -40,6 +45,12 @@ const Register = () => {
         !formData.password
       ) {
         setError('All fields are required');
+        setLoading(false);
+        return;
+      }
+
+      if (!/^\d{10}$/.test(formData.phone)) {
+        setError('Phone number must be exactly 10 digits');
         setLoading(false);
         return;
       }
@@ -58,17 +69,10 @@ const Register = () => {
         profilePic
       );
 
-      setSuccess(
-        'Registration successful! Please wait for admin approval to login.'
+      toast.success(
+        "Registration successful! Please wait for admin approval to login. You'll be mailed and informed when admin approves."
       );
-      setFormData({
-        username: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-      });
-      setProfilePic(null);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -98,13 +102,15 @@ const Register = () => {
               />
             </div>
             <div className="form-group">
-              <label>Phone</label>
+              <label>Phone (10 digits)</label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="+91 90000 00000"
+                placeholder="9876543210"
+                inputMode="numeric"
+                maxLength={10}
                 required
               />
             </div>
@@ -153,7 +159,6 @@ const Register = () => {
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
 
           <button
             type="submit"

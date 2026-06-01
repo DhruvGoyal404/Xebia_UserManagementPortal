@@ -12,8 +12,8 @@ Full-stack user management system with admin approval workflow and Cloudinary-ba
 
 ## Tech Stack
 
-- **Backend:** Node.js, Express, MongoDB (Atlas), JWT, bcryptjs, Cloudinary
-- **Frontend:** React 18 (CRA), React Router, Context API, Axios
+- **Backend:** Node.js, Express, MongoDB (Atlas), JWT, bcryptjs, Cloudinary, Nodemailer
+- **Frontend:** React 18 (CRA), React Router, Context API, Axios, react-hot-toast
 - **Deployment:** Vercel (separate projects for backend and frontend)
 
 ---
@@ -23,6 +23,8 @@ Full-stack user management system with admin approval workflow and Cloudinary-ba
 - **Users:** Register → Pending → Admin Approval → Login → Dashboard
 - **Admins:** Approve/reject requests, manage users (activate/deactivate), create new admins
 - **Profile pics:** Uploaded to Cloudinary on registration, URL stored in MongoDB
+- **Approval emails:** Users get notified via Gmail SMTP when admin approves their registration
+- **Toasts:** react-hot-toast for inline UX feedback
 - **Theming:** Light / dark mode toggle with localStorage persistence
 - **Auth:** JWT-based with route guards (Protected + Guest routes) and 401 auto-logout
 
@@ -59,6 +61,9 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
+MAIL=your_gmail_address@gmail.com
+MAIL_PASSWORD=your_gmail_app_password
+
 PORT=5000
 NODE_ENV=production
 ```
@@ -81,6 +86,17 @@ For production (Vercel), set `REACT_APP_API_URL` to your deployed backend URL in
    - Vercel backend project → Settings → Environment Variables
 
 Profile pictures are uploaded to the folder `user-management/profile-pics` and stored with `width: 400, height: 400, crop: 'fill', gravity: 'face'` transformation. Returned `secure_url` is saved on the `User.profilePic` field.
+
+## Email Setup (Gmail)
+
+Approval emails are sent via Gmail SMTP using Nodemailer.
+
+1. Use a Gmail account, enable 2-Step Verification
+2. Generate an App Password: https://myaccount.google.com/apppasswords
+3. Add to env vars:
+   - `MAIL` — your Gmail address
+   - `MAIL_PASSWORD` — the 16-char app password (spaces ignored)
+4. Set the same in Vercel backend project env vars
 
 ---
 
@@ -109,7 +125,7 @@ Both projects deploy from the same GitHub repo, with different **Root Directory*
 **Backend project**
 - Root Directory: `backend`
 - Framework Preset: Other
-- Env vars: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- Env vars: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `MAIL`, `MAIL_PASSWORD`
 
 **Frontend project**
 - Root Directory: `frontend`
@@ -128,6 +144,3 @@ Both projects deploy from the same GitHub repo, with different **Root Directory*
 - CORS is currently open to all origins (tighten in `backend/server.js` for production hardening)
 - First admin must be seeded manually in MongoDB (chicken-and-egg with `/api/admin/create-admin`)
 
----
-
-Made by Dhruv Goyal

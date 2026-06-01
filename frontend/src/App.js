@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute, GuestRoute } from './components/RouteGuards';
@@ -16,6 +17,19 @@ function App() {
     <ThemeProvider>
       <Router>
         <AuthProvider>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 5000,
+              style: {
+                background: 'var(--surface)',
+                color: 'var(--text)',
+                border: '1px solid var(--border)',
+                fontSize: '13px',
+                maxWidth: '460px',
+              },
+            }}
+          />
           <Layout>
             <Routes>
               <Route path="/" element={<Landing />} />
