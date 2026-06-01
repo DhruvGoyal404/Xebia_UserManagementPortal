@@ -17,6 +17,15 @@
   opacity: 0.7;
 }
 
+.footer-link {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 600px) {
   .footer-inner {
     flex-direction: column;
