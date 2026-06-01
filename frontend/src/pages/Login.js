@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
@@ -8,17 +9,15 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       if (!email || !password) {
-        setError('Email and password are required');
+        toast.error('Email and password are required');
         setLoading(false);
         return;
       }
@@ -31,7 +30,7 @@ const Login = () => {
         navigate('/user-dashboard');
       }
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -65,8 +64,6 @@ const Login = () => {
               required
             />
           </div>
-
-          {error && <div className="alert alert-error">{error}</div>}
 
           <button
             type="submit"

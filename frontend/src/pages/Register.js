@@ -15,7 +15,6 @@ const Register = () => {
     confirmPassword: '',
   });
   const [profilePic, setProfilePic] = useState(null);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
@@ -34,7 +33,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -44,19 +42,19 @@ const Register = () => {
         !formData.phone ||
         !formData.password
       ) {
-        setError('All fields are required');
+        toast.error('All fields are required');
         setLoading(false);
         return;
       }
 
       if (!/^\d{10}$/.test(formData.phone)) {
-        setError('Phone number must be exactly 10 digits');
+        toast.error('Phone number must be exactly 10 digits');
         setLoading(false);
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
+        toast.error('Passwords do not match');
         setLoading(false);
         return;
       }
@@ -74,7 +72,7 @@ const Register = () => {
       );
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -157,8 +155,6 @@ const Register = () => {
             <label>Profile Picture (optional)</label>
             <input type="file" accept="image/*" onChange={handleFileChange} />
           </div>
-
-          {error && <div className="alert alert-error">{error}</div>}
 
           <button
             type="submit"

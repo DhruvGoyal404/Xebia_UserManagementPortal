@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
@@ -7,18 +8,18 @@ const UserDashboard = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ username: '', phone: '' });
+  const [newProfilePic, setNewProfilePic] = useState(null);
 
   const fetchProfile = async () => {
     try {
       const res = await axiosInstance.get('/api/user/profile');
       setProfile(res.data);
       setFormData({ username: res.data.username, phone: res.data.phone });
-    } catch (err) {
-      setError('Failed to fetch profile');
+    } catch {
+      toast.error('Failed to fetch profile');
     } finally {
       setLoading(false);
     }
@@ -31,14 +32,28 @@ const UserDashboard = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
-      await axiosInstance.put('/api/user/update-profile', formData);
-      setSuccess('Profile updated successfully!');
-      fetchProfile();
+      const fd = new FormData();
+      fd.append('username', formData.username);
+      fd.append('phone', formData.phone);
+      if (newProfilePic) fd.append('profilePic', newProfilePic);
+
+      const res = await axiosInstance.put('/api/user/update-profile', fd);
+      setProfile(res.data.user);
+      toast.success('Profile updated');
       setEditing(false);
+      setNewProfilePic(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile');
+      toast.error(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handlePhoneChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setFormData({ ...formData, phone: digits });
   };
 
   if (loading) {
@@ -58,13 +73,16 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
       {profile && (
         <div className="card profile-card">
           <div className="profile-header">
-            <div className="avatar">{initial}</div>
+            <div className="avatar">
+              {profile.profilePic ? (
+                <img src={profile.profilePic} alt={profile.username} />
+              ) : (
+                initial
+              )}
+            </div>
             <div className="profile-meta">
               <h3>{profile.username}</h3>
               <p className="text-muted">{profile.email}</p>
@@ -98,34 +116,61 @@ const UserDashboard = () => {
             </div>
           ) : (
             <form onSubmit={handleUpdate} className="edit-form">
-              <div className="form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Username</label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) =>
+                      setFormData({ ...formData, username: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone (10 digits)</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    inputMode="numeric"
+                    maxLength={10}
+                  />
+                </div>
               </div>
               <div className="form-group">
-                <label>Phone</label>
+                <label>Profile Picture (optional)</label>
                 <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setNewProfilePic(e.target.files[0])}
                 />
+                {newProfilePic && (
+                  <p className="text-muted" style={{ marginTop: 4 }}>
+                    Selected: {newProfilePic.name}
+                  </p>
+                )}
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving…' : 'Save Changes'}
                 </button>
                 <button
                   type="button"
                   className="btn"
-                  onClick={() => setEditing(false)}
+                  onClick={() => {
+                    setEditing(false);
+                    setNewProfilePic(null);
+                    setFormData({
+                      username: profile.username,
+                      phone: profile.phone,
+                    });
+                  }}
+                  disabled={saving}
                 >
                   Cancel
                 </button>

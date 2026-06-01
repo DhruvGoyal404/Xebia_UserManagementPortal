@@ -1,6 +1,6 @@
 const User = require('../models/User');
+const { uploadBufferToCloudinary } = require('../utils/cloudinary');
 
-// Get user profile
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -10,17 +10,34 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update user profile
 exports.updateProfile = async (req, res) => {
   try {
     const { username, phone } = req.body;
     const user = await User.findById(req.user.id);
 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     if (username) user.username = username;
     if (phone) user.phone = phone;
 
+    if (req.files && req.files.profilePic) {
+      try {
+        const result = await uploadBufferToCloudinary(req.files.profilePic.data);
+        user.profilePic = result.secure_url;
+      } catch (uploadErr) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload profile picture' });
+      }
+    }
+
     await user.save();
-    res.json({ message: 'Profile updated', user });
+
+    const safe = user.toObject();
+    delete safe.password;
+    res.json({ message: 'Profile updated', user: safe });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

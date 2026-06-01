@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import axiosInstance from '../utils/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
@@ -11,8 +12,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [view, setView] = useState('card');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showCreateAdminForm, setShowCreateAdminForm] = useState(false);
   const [adminFormData, setAdminFormData] = useState({
     username: '',
@@ -24,8 +23,6 @@ const AdminDashboard = () => {
   const api = axiosInstance;
 
   useEffect(() => {
-    setError('');
-    setSuccess('');
     if (activeTab === 'dashboard') fetchStats();
     else if (activeTab === 'requests') fetchPendingRequests();
     else if (activeTab === 'users') fetchAllUsers();
@@ -37,7 +34,7 @@ const AdminDashboard = () => {
       const res = await api.get('/api/admin/dashboard-stats');
       setStats(res.data);
     } catch {
-      setError('Failed to fetch stats');
+      toast.error('Failed to fetch stats');
     }
   };
 
@@ -47,7 +44,7 @@ const AdminDashboard = () => {
       const res = await api.get('/api/admin/pending-requests');
       setPendingRequests(res.data);
     } catch {
-      setError('Failed to fetch requests');
+      toast.error('Failed to fetch requests');
     } finally {
       setLoading(false);
     }
@@ -59,7 +56,7 @@ const AdminDashboard = () => {
       const res = await api.get('/api/admin/all-users');
       setAllUsers(res.data);
     } catch {
-      setError('Failed to fetch users');
+      toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -68,10 +65,10 @@ const AdminDashboard = () => {
   const approveRequest = async (id) => {
     try {
       await api.post(`/api/admin/approve-request/${id}`, {});
-      setSuccess('Request approved');
+      toast.success('Request approved');
       fetchPendingRequests();
     } catch {
-      setError('Failed to approve');
+      toast.error('Failed to approve');
     }
   };
 
@@ -80,45 +77,43 @@ const AdminDashboard = () => {
       await api.post(`/api/admin/reject-request/${id}`, {
         reason: 'Rejected by admin',
       });
-      setSuccess('Request rejected');
+      toast.success('Request rejected');
       fetchPendingRequests();
     } catch {
-      setError('Failed to reject');
+      toast.error('Failed to reject');
     }
   };
 
   const toggleUserStatus = async (id) => {
     try {
       await api.post(`/api/admin/toggle-user-status/${id}`, {});
-      setSuccess('Status updated');
+      toast.success('Status updated');
       fetchAllUsers();
     } catch {
-      setError('Failed to update');
+      toast.error('Failed to update');
     }
   };
 
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (!/^[^\s@]+@gmail\.com$/i.test(adminFormData.email)) {
-      setError('Email must be a valid @gmail.com address');
+      toast.error('Email must be a valid @gmail.com address');
       return;
     }
 
     if (!/^\d{10}$/.test(adminFormData.phone)) {
-      setError('Phone number must be exactly 10 digits');
+      toast.error('Phone number must be exactly 10 digits');
       return;
     }
 
     try {
       await api.post('/api/admin/create-admin', adminFormData);
-      setSuccess('Admin created');
+      toast.success('Admin created');
       setAdminFormData({ username: '', email: '', phone: '', password: '' });
       setShowCreateAdminForm(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create admin');
+      toast.error(err.response?.data?.message || 'Failed to create admin');
     }
   };
 
@@ -173,9 +168,6 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
 
       {activeTab === 'dashboard' && (
         <div className="stats-grid">
