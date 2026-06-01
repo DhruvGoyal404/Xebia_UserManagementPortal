@@ -4,25 +4,19 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const UserDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    phone: '',
-  });
+  const [formData, setFormData] = useState({ username: '', phone: '' });
 
   const fetchProfile = async () => {
     try {
       const res = await axiosInstance.get('/api/user/profile');
       setProfile(res.data);
-      setFormData({
-        username: res.data.username,
-        phone: res.data.phone,
-      });
+      setFormData({ username: res.data.username, phone: res.data.phone });
     } catch (err) {
       setError('Failed to fetch profile');
     } finally {
@@ -32,6 +26,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdate = async (e) => {
@@ -46,93 +41,108 @@ const UserDashboard = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return <div className="container empty-state">Loading…</div>;
+  }
+
+  const initial = (profile?.username || user?.username || '?')
+    .charAt(0)
+    .toUpperCase();
 
   return (
-    <div className="user-dashboard">
-      <nav className="navbar">
-        <h1>User Dashboard</h1>
-        <div className="user-info">
-          <span>Welcome, {user?.username}</span>
-          <button onClick={logout}>Logout</button>
+    <div className="container dashboard">
+      <div className="dashboard-header">
+        <div>
+          <h1>Your Profile</h1>
+          <p className="dashboard-sub">Manage your account details.</p>
         </div>
-      </nav>
-
-      <div className="dashboard-content">
-        <h2>Your Profile</h2>
-
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
-
-        {profile && (
-          <div className="profile-card">
-            {profile.profilePic && (
-              <img src={profile.profilePic} alt="Profile" className="profile-pic" />
-            )}
-            <div className="profile-info">
-              <p>
-                <strong>Username:</strong> {profile.username}
-              </p>
-              <p>
-                <strong>Email:</strong> {profile.email}
-              </p>
-              <p>
-                <strong>Phone:</strong> {profile.phone}
-              </p>
-              <p>
-                <strong>Role:</strong> {profile.role}
-              </p>
-              <p>
-                <strong>Status:</strong>{' '}
-                {profile.isActive ? 'Active' : 'Inactive'}
-              </p>
-            </div>
-
-            {!editing ? (
-              <button
-                className="btn-edit"
-                onClick={() => setEditing(true)}
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <form onSubmit={handleUpdate} className="edit-form">
-                <div className="form-group">
-                  <label>Username:</label>
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Phone:</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-actions">
-                  <button type="submit">Save Changes</button>
-                  <button
-                    type="button"
-                    onClick={() => setEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
       </div>
+
+      {error && <div className="alert alert-error">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
+
+      {profile && (
+        <div className="card profile-card">
+          <div className="profile-header">
+            <div className="avatar">{initial}</div>
+            <div className="profile-meta">
+              <h3>{profile.username}</h3>
+              <p className="text-muted">{profile.email}</p>
+              <div className="profile-badges">
+                <span className="badge badge-primary">{profile.role}</span>
+                <span
+                  className={
+                    profile.isActive ? 'badge badge-success' : 'badge'
+                  }
+                >
+                  {profile.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {!editing ? (
+            <div className="profile-info-grid">
+              <InfoItem label="Username" value={profile.username} />
+              <InfoItem label="Email" value={profile.email} />
+              <InfoItem label="Phone" value={profile.phone} />
+              <InfoItem label="Role" value={profile.role} />
+              <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setEditing(true)}
+                >
+                  Edit Profile
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleUpdate} className="edit-form">
+              <div className="form-group">
+                <label>Username</label>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) =>
+                    setFormData({ ...formData, username: e.target.value })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setEditing(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   );
 };
+
+const InfoItem = ({ label, value }) => (
+  <div className="info-item">
+    <div className="info-label">{label}</div>
+    <div className="info-value">{value}</div>
+  </div>
+);
 
 export default UserDashboard;

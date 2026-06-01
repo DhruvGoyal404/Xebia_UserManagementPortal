@@ -1,0 +1,72 @@
+.landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  padding: 80px 24px 60px;
+  text-align: center;
+  max-width: 760px;
+}
+
+.hero .badge {
+  margin-bottom: 18px;
+}
+
+.hero h1 {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  background: linear-gradient(180deg, var(--text), var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding-bottom: 80px;
+}
+
+.feature h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.feature p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 50px 24px 40px;
+  }
+  .hero h1 {
+    font-size: 30px;
+  }
+  .features {
+    grid-template-columns: 1fr;
+    padding-bottom: 50px;
+  }
+}

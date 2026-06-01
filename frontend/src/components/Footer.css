@@ -1,0 +1,30 @@
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  margin-top: auto;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.footer-muted {
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .footer-inner {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    height: auto;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    text-align: center;
+  }
+}

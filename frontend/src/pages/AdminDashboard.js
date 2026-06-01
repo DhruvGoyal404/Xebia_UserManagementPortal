@@ -4,11 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [view, setView] = useState('card');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -22,15 +23,12 @@ const AdminDashboard = () => {
 
   const api = axiosInstance;
 
-  // Fetch dashboard data
   useEffect(() => {
-    if (activeTab === 'dashboard') {
-      fetchStats();
-    } else if (activeTab === 'requests') {
-      fetchPendingRequests();
-    } else if (activeTab === 'users') {
-      fetchAllUsers();
-    }
+    setError('');
+    setSuccess('');
+    if (activeTab === 'dashboard') fetchStats();
+    else if (activeTab === 'requests') fetchPendingRequests();
+    else if (activeTab === 'users') fetchAllUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -38,7 +36,7 @@ const AdminDashboard = () => {
     try {
       const res = await api.get('/api/admin/dashboard-stats');
       setStats(res.data);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch stats');
     }
   };
@@ -48,7 +46,7 @@ const AdminDashboard = () => {
     try {
       const res = await api.get('/api/admin/pending-requests');
       setPendingRequests(res.data);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch requests');
     } finally {
       setLoading(false);
@@ -60,49 +58,42 @@ const AdminDashboard = () => {
     try {
       const res = await api.get('/api/admin/all-users');
       setAllUsers(res.data);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch users');
     } finally {
       setLoading(false);
     }
   };
 
-  const approveRequest = async (requestId) => {
+  const approveRequest = async (id) => {
     try {
-      await api.post(
-        `/api/admin/approve-request/${requestId}`,
-        {}
-      );
-      setSuccess('Request approved!');
+      await api.post(`/api/admin/approve-request/${id}`, {});
+      setSuccess('Request approved');
       fetchPendingRequests();
-    } catch (err) {
-      setError('Failed to approve request');
+    } catch {
+      setError('Failed to approve');
     }
   };
 
-  const rejectRequest = async (requestId) => {
+  const rejectRequest = async (id) => {
     try {
-      await api.post(
-        `/api/admin/reject-request/${requestId}`,
-        { reason: 'Rejected by admin' }
-      );
-      setSuccess('Request rejected!');
+      await api.post(`/api/admin/reject-request/${id}`, {
+        reason: 'Rejected by admin',
+      });
+      setSuccess('Request rejected');
       fetchPendingRequests();
-    } catch (err) {
-      setError('Failed to reject request');
+    } catch {
+      setError('Failed to reject');
     }
   };
 
-  const toggleUserStatus = async (userId) => {
+  const toggleUserStatus = async (id) => {
     try {
-      await api.post(
-        `/api/admin/toggle-user-status/${userId}`,
-        {}
-      );
-      setSuccess('User status updated!');
+      await api.post(`/api/admin/toggle-user-status/${id}`, {});
+      setSuccess('Status updated');
       fetchAllUsers();
-    } catch (err) {
-      setError('Failed to update user status');
+    } catch {
+      setError('Failed to update');
     }
   };
 
@@ -110,7 +101,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       await api.post('/api/admin/create-admin', adminFormData);
-      setSuccess('Admin created successfully!');
+      setSuccess('Admin created');
       setAdminFormData({ username: '', email: '', phone: '', password: '' });
       setShowCreateAdminForm(false);
     } catch (err) {
@@ -118,183 +109,143 @@ const AdminDashboard = () => {
     }
   };
 
-  return (
-    <div className="admin-dashboard">
-      <nav className="navbar">
-        <h1>Admin Dashboard</h1>
-        <div className="user-info">
-          <span>Welcome, {user?.username}</span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      </nav>
+  const tabs = [
+    { id: 'dashboard', label: 'Overview' },
+    { id: 'requests', label: 'Requests' },
+    { id: 'users', label: 'Users' },
+    { id: 'admin', label: 'Admins' },
+  ];
 
-      <div className="tabs">
-        <button
-          className={activeTab === 'dashboard' ? 'active' : ''}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          Dashboard
-        </button>
-        <button
-          className={activeTab === 'requests' ? 'active' : ''}
-          onClick={() => setActiveTab('requests')}
-        >
-          Registration Requests
-        </button>
-        <button
-          className={activeTab === 'users' ? 'active' : ''}
-          onClick={() => setActiveTab('users')}
-        >
-          All Users
-        </button>
-        <button
-          className={activeTab === 'admin' ? 'active' : ''}
-          onClick={() => setActiveTab('admin')}
-        >
-          Admin Management
-        </button>
+  const showViewToggle = activeTab === 'requests' || activeTab === 'users';
+
+  return (
+    <div className="container dashboard">
+      <div className="dashboard-header">
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p className="dashboard-sub">
+            Welcome back, <strong>{user?.username}</strong>
+          </p>
+        </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      <div className="tabs">
+        <div className="tabs-list">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              className={`tab ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {showViewToggle && (
+          <div className="view-toggle">
+            <button
+              className={`view-btn ${view === 'card' ? 'active' : ''}`}
+              onClick={() => setView('card')}
+              title="Card view"
+            >
+              ▦
+            </button>
+            <button
+              className={`view-btn ${view === 'list' ? 'active' : ''}`}
+              onClick={() => setView('list')}
+              title="List view"
+            >
+              ☰
+            </button>
+          </div>
+        )}
+      </div>
 
-      {activeTab === 'dashboard' && stats && (
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <h3>Total Users</h3>
-            <p className="stat-value">{stats.totalUsers}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Active Users</h3>
-            <p className="stat-value">{stats.activeUsers}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Pending Requests</h3>
-            <p className="stat-value">{stats.pendingRequests}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Total Admins</h3>
-            <p className="stat-value">{stats.totalAdmins}</p>
-          </div>
+      {error && <div className="alert alert-error">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
+
+      {activeTab === 'dashboard' && (
+        <div className="stats-grid">
+          <StatCard label="Total Users" value={stats?.totalUsers ?? '—'} />
+          <StatCard label="Active Users" value={stats?.activeUsers ?? '—'} />
+          <StatCard
+            label="Pending Requests"
+            value={stats?.pendingRequests ?? '—'}
+          />
+          <StatCard label="Total Admins" value={stats?.totalAdmins ?? '—'} />
         </div>
       )}
 
       {activeTab === 'requests' && (
-        <div className="content-section">
-          <h2>Pending Registration Requests</h2>
-          {loading ? (
-            <p>Loading...</p>
-          ) : pendingRequests.length === 0 ? (
-            <p>No pending requests</p>
-          ) : (
-            <table className="requests-table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingRequests.map((req) => (
-                  <tr key={req._id}>
-                    <td>{req.username}</td>
-                    <td>{req.email}</td>
-                    <td>{req.phone}</td>
-                    <td>
-                      <button
-                        className="btn-approve"
-                        onClick={() => approveRequest(req._id)}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className="btn-reject"
-                        onClick={() => rejectRequest(req._id)}
-                      >
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <RequestsView
+          loading={loading}
+          requests={pendingRequests}
+          view={view}
+          onApprove={approveRequest}
+          onReject={rejectRequest}
+        />
       )}
 
       {activeTab === 'users' && (
-        <div className="content-section">
-          <h2>All Users</h2>
-          {loading ? (
-            <p>Loading...</p>
-          ) : allUsers.length === 0 ? (
-            <p>No users found</p>
-          ) : (
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allUsers.map((u) => (
-                  <tr key={u._id}>
-                    <td>{u.username}</td>
-                    <td>{u.email}</td>
-                    <td>{u.phone}</td>
-                    <td>{u.role}</td>
-                    <td>{u.isActive ? 'Active' : 'Inactive'}</td>
-                    <td>
-                      <button
-                        className={u.isActive ? 'btn-deactivate' : 'btn-activate'}
-                        onClick={() => toggleUserStatus(u._id)}
-                      >
-                        {u.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <UsersView
+          loading={loading}
+          users={allUsers}
+          view={view}
+          onToggle={toggleUserStatus}
+        />
       )}
 
       {activeTab === 'admin' && (
-        <div className="content-section">
-          <h2>Admin Management</h2>
-          {!showCreateAdminForm ? (
-            <button
-              className="btn-create-admin"
-              onClick={() => setShowCreateAdminForm(true)}
-            >
-              Create New Admin
-            </button>
-          ) : (
+        <div className="card">
+          <div className="card-section-header">
+            <div>
+              <h3>Admin Management</h3>
+              <p className="text-muted">Create new admin accounts.</p>
+            </div>
+            {!showCreateAdminForm && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowCreateAdminForm(true)}
+              >
+                + New Admin
+              </button>
+            )}
+          </div>
+
+          {showCreateAdminForm && (
             <form onSubmit={handleCreateAdmin} className="admin-form">
-              <div className="form-group">
-                <label>Username:</label>
-                <input
-                  type="text"
-                  value={adminFormData.username}
-                  onChange={(e) =>
-                    setAdminFormData({
-                      ...adminFormData,
-                      username: e.target.value,
-                    })
-                  }
-                  required
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Username</label>
+                  <input
+                    type="text"
+                    value={adminFormData.username}
+                    onChange={(e) =>
+                      setAdminFormData({
+                        ...adminFormData,
+                        username: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="tel"
+                    value={adminFormData.phone}
+                    onChange={(e) =>
+                      setAdminFormData({
+                        ...adminFormData,
+                        phone: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
               </div>
               <div className="form-group">
-                <label>Email:</label>
+                <label>Email</label>
                 <input
                   type="email"
                   value={adminFormData.email}
@@ -308,21 +259,7 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Phone:</label>
-                <input
-                  type="tel"
-                  value={adminFormData.phone}
-                  onChange={(e) =>
-                    setAdminFormData({
-                      ...adminFormData,
-                      phone: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Password:</label>
+                <label>Password</label>
                 <input
                   type="password"
                   value={adminFormData.password}
@@ -336,9 +273,12 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-actions">
-                <button type="submit">Create Admin</button>
+                <button type="submit" className="btn btn-primary">
+                  Create Admin
+                </button>
                 <button
                   type="button"
+                  className="btn"
                   onClick={() => setShowCreateAdminForm(false)}
                 >
                   Cancel
@@ -348,6 +288,187 @@ const AdminDashboard = () => {
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+const StatCard = ({ label, value }) => (
+  <div className="card stat-card">
+    <div className="stat-label">{label}</div>
+    <div className="stat-value">{value}</div>
+  </div>
+);
+
+const RequestsView = ({ loading, requests, view, onApprove, onReject }) => {
+  if (loading) return <div className="empty-state">Loading…</div>;
+  if (requests.length === 0)
+    return <div className="card empty-state">No pending requests</div>;
+
+  if (view === 'list') {
+    return (
+      <div className="card list-card">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th className="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((r) => (
+              <tr key={r._id}>
+                <td>{r.username}</td>
+                <td>{r.email}</td>
+                <td>{r.phone}</td>
+                <td className="actions-col">
+                  <button
+                    className="btn btn-sm btn-success"
+                    onClick={() => onApprove(r._id)}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onReject(r._id)}
+                  >
+                    Reject
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cards-grid">
+      {requests.map((r) => (
+        <div key={r._id} className="card item-card">
+          <div className="item-header">
+            <div className="avatar avatar-sm">
+              {r.username.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h4>{r.username}</h4>
+              <p className="text-muted">{r.email}</p>
+            </div>
+          </div>
+          <div className="item-meta">
+            <span className="text-muted">Phone:</span> {r.phone}
+          </div>
+          <div className="item-actions">
+            <button
+              className="btn btn-sm btn-success"
+              onClick={() => onApprove(r._id)}
+            >
+              Approve
+            </button>
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={() => onReject(r._id)}
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const UsersView = ({ loading, users, view, onToggle }) => {
+  if (loading) return <div className="empty-state">Loading…</div>;
+  if (users.length === 0)
+    return <div className="card empty-state">No users found</div>;
+
+  if (view === 'list') {
+    return (
+      <div className="card list-card">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th className="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u._id}>
+                <td>{u.username}</td>
+                <td>{u.email}</td>
+                <td>{u.phone}</td>
+                <td>
+                  <span className="badge badge-primary">{u.role}</span>
+                </td>
+                <td>
+                  <span
+                    className={u.isActive ? 'badge badge-success' : 'badge'}
+                  >
+                    {u.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="actions-col">
+                  <button
+                    className={
+                      u.isActive ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-success'
+                    }
+                    onClick={() => onToggle(u._id)}
+                  >
+                    {u.isActive ? 'Deactivate' : 'Activate'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cards-grid">
+      {users.map((u) => (
+        <div key={u._id} className="card item-card">
+          <div className="item-header">
+            <div className="avatar avatar-sm">
+              {u.username.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h4>{u.username}</h4>
+              <p className="text-muted">{u.email}</p>
+            </div>
+          </div>
+          <div className="item-badges">
+            <span className="badge badge-primary">{u.role}</span>
+            <span className={u.isActive ? 'badge badge-success' : 'badge'}>
+              {u.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <div className="item-meta">
+            <span className="text-muted">Phone:</span> {u.phone}
+          </div>
+          <div className="item-actions">
+            <button
+              className={
+                u.isActive
+                  ? 'btn btn-sm btn-danger'
+                  : 'btn btn-sm btn-success'
+              }
+              onClick={() => onToggle(u._id)}
+            >
+              {u.isActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
