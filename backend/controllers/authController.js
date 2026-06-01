@@ -24,12 +24,12 @@ exports.register = async (req, res) => {
     }
 
     let profilePicUrl = null;
-    if (req.files && req.files.profilePic) {
+    if (req.file) {
       try {
-        const file = req.files.profilePic;
-        const result = await uploadBufferToCloudinary(file.data);
+        const result = await uploadBufferToCloudinary(req.file.buffer);
         profilePicUrl = result.secure_url;
       } catch (uploadErr) {
+        console.error('Cloudinary upload error (register):', uploadErr.message);
         return res
           .status(500)
           .json({ message: 'Failed to upload profile picture' });

@@ -22,11 +22,12 @@ exports.updateProfile = async (req, res) => {
     if (username) user.username = username;
     if (phone) user.phone = phone;
 
-    if (req.files && req.files.profilePic) {
+    if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.files.profilePic.data);
+        const result = await uploadBufferToCloudinary(req.file.buffer);
         user.profilePic = result.secure_url;
       } catch (uploadErr) {
+        console.error('Cloudinary upload error (update):', uploadErr.message);
         return res
           .status(500)
           .json({ message: 'Failed to upload profile picture' });
