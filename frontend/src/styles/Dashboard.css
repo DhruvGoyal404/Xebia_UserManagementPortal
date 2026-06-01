@@ -1,12 +1,12 @@
 .dashboard {
-  padding: 32px 24px 60px;
+  padding: 56px 24px 80px;
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 22px;
+  margin-bottom: 32px;
   gap: 16px;
 }
 

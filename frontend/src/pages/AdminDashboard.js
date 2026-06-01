@@ -99,6 +99,19 @@ const AdminDashboard = () => {
 
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!/^[^\s@]+@gmail\.com$/i.test(adminFormData.email)) {
+      setError('Email must be a valid @gmail.com address');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(adminFormData.phone)) {
+      setError('Phone number must be exactly 10 digits');
+      return;
+    }
+
     try {
       await api.post('/api/admin/create-admin', adminFormData);
       setSuccess('Admin created');
@@ -230,22 +243,23 @@ const AdminDashboard = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Phone</label>
+                  <label>Phone (10 digits)</label>
                   <input
                     type="tel"
                     value={adminFormData.phone}
-                    onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        phone: e.target.value,
-                      })
-                    }
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setAdminFormData({ ...adminFormData, phone: digits });
+                    }}
+                    placeholder="9876543210"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
                   />
                 </div>
               </div>
               <div className="form-group">
-                <label>Email</label>
+                <label>Email (@gmail.com only)</label>
                 <input
                   type="email"
                   value={adminFormData.email}
@@ -255,6 +269,7 @@ const AdminDashboard = () => {
                       email: e.target.value,
                     })
                   }
+                  placeholder="name@gmail.com"
                   required
                 />
               </div>

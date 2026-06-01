@@ -27,7 +27,7 @@ const Navbar = () => {
                 {user.username}
                 <span className="badge badge-primary navbar-role">{user.role}</span>
               </span>
-              <button className="btn btn-sm" onClick={handleLogout}>
+              <button className="btn btn-sm btn-danger" onClick={handleLogout}>
                 Logout
               </button>
             </>
