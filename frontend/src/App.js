@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ProtectedRoute, GuestRoute } from './components/RouteGuards';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Register from './pages/Register';
@@ -9,25 +10,6 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import './App.css';
-
-const ProtectedRoute = ({ children, allowedRole }) => {
-  const { user, token } = useAuth();
-
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRole && user.role !== allowedRole) {
-    return (
-      <Navigate
-        to={user.role === 'admin' ? '/admin-dashboard' : '/user-dashboard'}
-        replace
-      />
-    );
-  }
-
-  return children;
-};
 
 function App() {
   return (
@@ -37,8 +19,22 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route
+                path="/login"
+                element={
+                  <GuestRoute>
+                    <Login />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <GuestRoute>
+                    <Register />
+                  </GuestRoute>
+                }
+              />
               <Route
                 path="/admin-dashboard"
                 element={
